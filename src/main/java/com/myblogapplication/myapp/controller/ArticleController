@@ -1,4 +1,4 @@
-package org.wildcodeschool.myblog.controller;
+package org/wildcodeschool/myblog/controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +21,15 @@ public class ArticleController {
         this.articleRepository = articleRepository;
     }
 
+    @GetMapping("/title/{title}")
+    public ResponseEntity<List<Article>> getArticlesByTitle(@PathVariable String title) {
+        List<Article> articles = articleRepository.findByTitle(title);
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+
     @GetMapping
     public ResponseEntity<List<Article>> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
@@ -40,6 +49,40 @@ public class ArticleController {
 
         Article article = optionalArticle.get();
         return ResponseEntity.ok(article);
+    }
+    
+    @GetMapping("/search")
+    public ResponseEntity<List<Article>> searchArticlesByContent(@RequestParam String keyword) {
+        List<Article> articles = articleRepository.findByContentContaining(keyword);
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+
+    @GetMapping("/search-by-date")
+    public ResponseEntity<List<Article>> searchArticlesByDate(@RequestParam String date) {
+        LocalDateTime localDateTime;
+        try {
+            localDateTime = LocalDateTime.parse(date);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<Article> articles = articleRepository.findByCreatedAtAfter(localDateTime);
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<List<Article>> getLatestArticles() {
+        List<Article> articles = articleRepository.findTop5ByOrderByCreatedAtDesc();
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
     }
 
     @PostMapping
